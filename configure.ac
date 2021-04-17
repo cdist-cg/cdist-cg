@@ -18,8 +18,11 @@ AC_LANG([C])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdio.h])
+AC_CHECK_HEADERS([strings.h])
+AC_CHECK_HEADERS([unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_SIZE_T
 
 # Checks for library functions.
 
