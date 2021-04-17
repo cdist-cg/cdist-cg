@@ -22,6 +22,13 @@ enum cdist_cmd {
 	CMD_SCAN
 };
 
+/* command declarations */
+
+extern void cmd_banner(FILE *outstream);
+
+
+/* argument parsing */
+
 static unsigned int get_global_opts(int argc, char *argv[]) {
 	/**
 	 * Consume global cdist-cg options.
@@ -69,6 +76,7 @@ static int get_cdist_cmd(int argc, char *argv[], enum cdist_cmd *cmd) {
 	return 1;
 }
 
+
 int main(int argc, char *argv[]) {
 	int apos = 1;
 	enum cdist_cmd command = CMD_UNKNOWN;
@@ -90,8 +98,7 @@ int main(int argc, char *argv[]) {
 
 	switch (command) {
 	case CMD_BANNER:
-		fprintf(stderr, "banner command is not yet implemented.\n");
-		return 1;
+		cmd_banner(stdout);
 		break;
 	case CMD_CONFIG:
 		fprintf(stderr, "config command is not yet implemented.\n");
