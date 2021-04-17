@@ -17,6 +17,10 @@ AC_LANG([C])
 # Checks for libraries.
 
 # Checks for header files.
+
+dnl check stdlib.h, stdarg.h, string.h, and float.h
+AC_HEADER_STDC
+
 AC_CHECK_HEADERS([stdio.h])
 AC_CHECK_HEADERS([strings.h])
 AC_CHECK_HEADERS([unistd.h])
