@@ -8,4 +8,4 @@ AM_CFLAGS += -O2
 endif
 
 bin_PROGRAMS = cdist-cg
-cdist_cg_SOURCES = src/main.c src/banner.c
+cdist_cg_SOURCES = src/main.c src/banner.c src/config.c src/info.c src/inventory.c

@@ -14,7 +14,12 @@
 
 /* command declarations */
 
-extern void cmd_banner(FILE *outstream);
+#define DECLARE_CDIST_CMD(name) extern int cmd_##name(int argc, char *argv[])
+
+DECLARE_CDIST_CMD(banner);
+DECLARE_CDIST_CMD(config);
+DECLARE_CDIST_CMD(info);
+DECLARE_CDIST_CMD(inventory);
 
 
 /* types and static variables */
@@ -179,19 +184,14 @@ int main(int argc, char *argv[]) {
 
 	switch (command) {
 	case CMD_BANNER:
-		cmd_banner(stdout);
-		break;
+		return cmd_banner((argc - apos), &argv[apos]);
 	case CMD_CONFIG:
-		fprintf(stderr, "config command is not yet implemented.\n");
-		return EXIT_FAILURE;
-		break;
+		return cmd_config((argc - apos), &argv[apos]);
 	case CMD_INSTALL:
 		fprintf(stderr, "install command is not available in cdist-cg.\n");
 		return EXIT_FAILURE;
 	case CMD_INVENTORY:
-		fprintf(stderr, "inventory command is not yet implemented.\n");
-		return EXIT_FAILURE;
-		break;
+		return cmd_inventory((argc - apos), &argv[apos]);
 	case CMD_PREOS:
 		fprintf(stderr, "preos is not available in cdist-cg.\n");
 		return EXIT_FAILURE;
@@ -199,13 +199,11 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "cdist shell is not available in cdist-cg.\n");
 		return EXIT_FAILURE;
 	case CMD_INFO:
-		fprintf(stderr, "info command is not yet implemented.\n");
-		return EXIT_FAILURE;
-		break;
+		return cmd_info((argc - apos), &argv[apos]);
 	default:
 		fprintf(stderr, "unknown command: %s\n", argv[apos]);
 		return EXIT_FAILURE;
 	}
 
-	return EXIT_SUCCESS;
+	return EXIT_FAILURE;
 }

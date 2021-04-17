@@ -1,8 +1,8 @@
 #include <stdio.h>
 
-void cmd_banner(FILE *outstream) {
+int cmd_banner(int argc, char *argv[]) {
 	fprintf(
-		outstream,
+		stdout,
 		"\n"
 		"  ██████ ██████  ██ ███████ ████████     ██████  ██████  \n"
 		" ██      ██   ██ ██ ██         ██       ██      ██       \n"
@@ -10,4 +10,5 @@ void cmd_banner(FILE *outstream) {
 		" ██      ██   ██ ██      ██    ██       ██      ██    ██ \n"
 		"  ██████ ██████  ██ ███████    ██        ██████  ██████  \n"
 		"\n");
+	return 0;
 }
