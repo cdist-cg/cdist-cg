@@ -71,7 +71,7 @@ void cdist_print_help(FILE *outstream) {
 /* argument parsing */
 
 static int cdist_get_global_opts(
-	int argc, char *argv[], const char *options[]) {
+	int *argc, char ***argv, const char *options[]) {
 	/**
 	 * Consume global cdist-cg options.
 	 * Will update the `options` variable.
@@ -79,7 +79,9 @@ static int cdist_get_global_opts(
 	 * Note that this function will begin parsing options from the first element
 	 * of argv!
 	 *
-	 * @returns the number of consumed arguments
+	 * This function updates argc and argv.
+	 *
+	 * @returns 0 on success
 	 */
 
 	extern char *optarg;
@@ -94,7 +96,7 @@ static int cdist_get_global_opts(
 	optreset = 1;
 	optind = 0;
 
-	while ((c = getopt(argc, argv, ":g:hV")) != -1) {
+	while ((c = getopt(*argc, *argv, ":g:hV")) != -1) {
 		switch (c) {
 		case 'g':
 			options[PARAM_CONFIG_FILE] = optarg;
@@ -122,49 +124,57 @@ static int cdist_get_global_opts(
 		exit(EXIT_FAILURE);
 	}
 
-	return optind;
+	*argc -= optind;
+	*argv += optind;
+
+	return 0;
 }
 
-static int cdist_get_cmd(int argc, char *argv[], enum cdist_cmd *cmd) {
+static int cdist_get_cmd(int *argc, char ***argv, enum cdist_cmd *cmd) {
 	/**
-	 * Get cdist command
+	 * Get cdist-cg command.
 	 *
-	 * @returns int positive on success (the number of consumed arguments),
-	 * negative on error.
+	 * This function updates argc and argv.
 	 *
-	 *  0 no more arguments/invalid command
-	 *  1 command consumed
+	 * @returns 0 on success.
+	 *          1 no command.
+	 *          2 invalid command.
 	 */
+	const char *_cmd = NULL;
 
-	if (argc <= 0) return 0;
+	if (*argc <= 0) return 1;
 
-	if (!strcasecmp(argv[0], "banner")) {
+	_cmd = *argv[0];
+
+	++*argv;
+	--*argc;
+
+	if (!strcasecmp(_cmd, "banner")) {
 		*cmd = CMD_BANNER;
-	} else if (!strcasecmp(argv[0], "config")) {
+	} else if (!strcasecmp(_cmd, "config")) {
 		*cmd = CMD_CONFIG;
-	} else if (!strcasecmp(argv[0], "install")) {
+	} else if (!strcasecmp(_cmd, "install")) {
 		*cmd = CMD_INSTALL;
-	} else if (!strcasecmp(argv[0], "inventory")) {
+	} else if (!strcasecmp(_cmd, "inventory")) {
 		*cmd = CMD_INVENTORY;
-	} else if (!strcasecmp(argv[0], "preos")) {
+	} else if (!strcasecmp(_cmd, "preos")) {
 		*cmd = CMD_PREOS;
-	} else if (!strcasecmp(argv[0], "shell")) {
+	} else if (!strcasecmp(_cmd, "shell")) {
 		*cmd = CMD_SHELL;
-	} else if (!strcasecmp(argv[0], "info")) {
+	} else if (!strcasecmp(_cmd, "info")) {
 		*cmd = CMD_INFO;
-	} else if (!strcasecmp(argv[0], "scan")) {
+	} else if (!strcasecmp(_cmd, "scan")) {
 		*cmd = CMD_SCAN;
 	} else {
 		/* Invalid command */
-		return 0;
+		return 2;
 	}
 
-	return 1;
+	return 0;
 }
 
 
 int main(int argc, char *argv[]) {
-	int apos = 1;
 	enum cdist_cmd command = CMD_UNKNOWN;
 
 	EXECNAME = argv[0];
@@ -175,25 +185,40 @@ int main(int argc, char *argv[]) {
 	printf("Debugging enabled.\n");
 #endif
 
-	apos += cdist_get_global_opts((argc - apos), &argv[apos], global_options);
+	char **argrestv = &argv[1];
+	int argrestc = (argc - 1);
 
-	if ((argc - apos) <= 0) {
-		fprintf(stderr, "no command given.\n");
-		return 1;
+	if (cdist_get_global_opts(&argrestc, &argrestv, global_options)) {
+		/* error in global options */
+		return EXIT_FAILURE;
 	}
 
-	apos += cdist_get_cmd((argc - apos), &argv[apos], &command);
+	switch (cdist_get_cmd(&argrestc, &argrestv, &command)) {
+	case 0:
+		/* ok */
+		break;
+	case 1:
+		fprintf(stderr, "%s: no command given\n", EXECNAME);
+		return EXIT_FAILURE;
+	case 2:
+		fprintf(stderr, "%s: invalid command: %s\n", EXECNAME, argrestv[-1]);
+		return EXIT_FAILURE;
+	default:
+		return EXIT_FAILURE;
+	}
 
+	/* NOTE: Handling of command line options is now passed to the commands.
+	 *       Unlike before, commands do not advance the *rest* pointers. */
 	switch (command) {
 	case CMD_BANNER:
-		return cdist_banner_main((argc - apos), &argv[apos]);
+		return cdist_banner_main(argrestc, argrestv);
 	case CMD_CONFIG:
-		return cdist_config_main((argc - apos), &argv[apos]);
+		return cdist_config_main(argrestc, argrestv);
 	case CMD_INSTALL:
 		fprintf(stderr, "install command is not available in cdist-cg.\n");
 		return EXIT_FAILURE;
 	case CMD_INVENTORY:
-		return cdist_inventory_main((argc - apos), &argv[apos]);
+		return cdist_inventory_main(argrestc, argrestv);
 	case CMD_PREOS:
 		fprintf(stderr, "preos is not available in cdist-cg.\n");
 		return EXIT_FAILURE;
@@ -201,9 +226,9 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "cdist shell is not available in cdist-cg.\n");
 		return EXIT_FAILURE;
 	case CMD_INFO:
-		return cdist_info_main((argc - apos), &argv[apos]);
+		return cdist_info_main(argrestc, argrestv);
 	default:
-		fprintf(stderr, "unknown command: %s\n", argv[apos]);
+		fprintf(stderr, "command not implemented: %s\n", argrestv[-1]);
 		return EXIT_FAILURE;
 	}
 
