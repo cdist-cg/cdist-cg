@@ -6,12 +6,12 @@ enum cdist_inventory_opt {
 	INVENTORY_DIR
 };
 
-static const char *options[] = {
+static const char *inv_options[] = {
 	[INVENTORY_DIR] = NULL
 };
 
 
-char *find_inventory_dir(void) {
+char *cdist_find_inventory_dir(void) {
 	/**
 	 * Finds the cdist inventory dir.
 	 *
@@ -35,11 +35,12 @@ char *find_inventory_dir(void) {
 	return NULL;
 }
 
-static void print_help(FILE *outstream) {
+static void cdist_inv_print_help(FILE *outstream) {
 
 }
 
-static int get_inventory_opts(int argc, char *argv[], const char *options[]) {
+static int cdist_get_inventory_opts(
+	int argc, char *argv[], const char *options[]) {
 	/**
 	 * Consume options to the inventory command.
 	 * Will update the `options` variable.
@@ -90,7 +91,7 @@ static int get_inventory_opts(int argc, char *argv[], const char *options[]) {
 	return optind;
 }
 
-int cmd_inventory(int argc, char *argv[]) {
-	(void)get_inventory_opts(argc, argv, options);
+int cdist_inventory_main(int argc, char *argv[]) {
+	(void)cdist_get_inventory_opts(argc, argv, options);
 	return 1;
 }

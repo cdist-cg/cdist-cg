@@ -14,7 +14,8 @@
 
 /* command declarations */
 
-#define DECLARE_CDIST_CMD(name) extern int cmd_##name(int argc, char *argv[])
+#define DECLARE_CDIST_CMD(name) \
+	extern int cdist_##name##_main(int argc, char *argv[])
 
 DECLARE_CDIST_CMD(banner);
 DECLARE_CDIST_CMD(config);
@@ -36,30 +37,30 @@ enum cdist_cmd {
 	CMD_SCAN
 };
 
-enum cdist_opt {
+enum cdist_global_opt {
 	PARAM_CONFIG_FILE
 };
 
 static const char *EXECNAME = PACKAGE;  /* default */
 
-static const char *options[] = {
+static const char *global_options[] = {
 	[PARAM_CONFIG_FILE] = NULL
 };
 
 /* help */
 
-void print_usage(FILE *outstream) {
+void cdist_print_usage(FILE *outstream) {
 	fprintf(outstream, "usage: %s ...\n", EXECNAME);
 }
 
-void print_version(FILE *outstream) {
+void cdist_print_version(FILE *outstream) {
 	fprintf(outstream, "%s %s\n", PACKAGE, VERSION);
 }
 
-void print_help(FILE *outstream) {
-	print_usage(outstream);
+void cdist_print_help(FILE *outstream) {
+	cdist_print_usage(outstream);
 	fprintf(outstream, "\n");
-	print_version(outstream);
+	cdist_print_version(outstream);
 	fprintf(outstream, "\n");
 	fprintf(
 		outstream,
@@ -69,7 +70,8 @@ void print_help(FILE *outstream) {
 
 /* argument parsing */
 
-static int get_global_opts(int argc, char *argv[], const char *options[]) {
+static int cdist_get_global_opts(
+	int argc, char *argv[], const char *options[]) {
 	/**
 	 * Consume global cdist-cg options.
 	 * Will update the `options` variable.
@@ -98,10 +100,10 @@ static int get_global_opts(int argc, char *argv[], const char *options[]) {
 			options[PARAM_CONFIG_FILE] = optarg;
 			break;
 		case 'h':
-			print_help(stdout);
+			cdist_print_help(stdout);
 			exit(EXIT_SUCCESS);
 		case 'V':
-			print_version(stdout);
+			cdist_print_version(stdout);
 			exit(EXIT_SUCCESS);
 		case ':':
 			fprintf(stderr, "%s: option requires an argument -- %c\n", EXECNAME, optopt);
@@ -116,14 +118,14 @@ static int get_global_opts(int argc, char *argv[], const char *options[]) {
 	}
 
 	if (error) {
-		print_usage(stderr);
+		cdist_print_usage(stderr);
 		exit(EXIT_FAILURE);
 	}
 
 	return optind;
 }
 
-static int get_cdist_cmd(int argc, char *argv[], enum cdist_cmd *cmd) {
+static int cdist_get_cmd(int argc, char *argv[], enum cdist_cmd *cmd) {
 	/**
 	 * Get cdist command
 	 *
@@ -173,25 +175,25 @@ int main(int argc, char *argv[]) {
 	printf("Debugging enabled.\n");
 #endif
 
-	apos += get_global_opts((argc - apos), &argv[apos], options);
+	apos += cdist_get_global_opts((argc - apos), &argv[apos], global_options);
 
 	if ((argc - apos) <= 0) {
 		fprintf(stderr, "no command given.\n");
 		return 1;
 	}
 
-	apos += get_cdist_cmd((argc - apos), &argv[apos], &command);
+	apos += cdist_get_cmd((argc - apos), &argv[apos], &command);
 
 	switch (command) {
 	case CMD_BANNER:
-		return cmd_banner((argc - apos), &argv[apos]);
+		return cdist_banner_main((argc - apos), &argv[apos]);
 	case CMD_CONFIG:
-		return cmd_config((argc - apos), &argv[apos]);
+		return cdist_config_main((argc - apos), &argv[apos]);
 	case CMD_INSTALL:
 		fprintf(stderr, "install command is not available in cdist-cg.\n");
 		return EXIT_FAILURE;
 	case CMD_INVENTORY:
-		return cmd_inventory((argc - apos), &argv[apos]);
+		return cdist_inventory_main((argc - apos), &argv[apos]);
 	case CMD_PREOS:
 		fprintf(stderr, "preos is not available in cdist-cg.\n");
 		return EXIT_FAILURE;
@@ -199,7 +201,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "cdist shell is not available in cdist-cg.\n");
 		return EXIT_FAILURE;
 	case CMD_INFO:
-		return cmd_info((argc - apos), &argv[apos]);
+		return cdist_info_main((argc - apos), &argv[apos]);
 	default:
 		fprintf(stderr, "unknown command: %s\n", argv[apos]);
 		return EXIT_FAILURE;

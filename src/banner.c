@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int cmd_banner(int argc, char *argv[]) {
+int cdist_banner_main(int argc, char *argv[]) {
 	fprintf(
 		stdout,
 		"\n"
