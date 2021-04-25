@@ -20,7 +20,9 @@ AC_LANG([C])
 
 dnl check stdlib.h, stdarg.h, string.h, and float.h
 AC_HEADER_STDC
+AC_HEADER_STDBOOL
 
+AC_CHECK_HEADERS([stdarg.h])
 AC_CHECK_HEADERS([stdio.h])
 AC_CHECK_HEADERS([strings.h])
 AC_CHECK_HEADERS([unistd.h])

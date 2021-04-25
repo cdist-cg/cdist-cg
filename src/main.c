@@ -47,6 +47,8 @@ static const char *global_options[] = {
 	[PARAM_CONFIG_FILE] = NULL
 };
 
+struct cdist_config *cdist_config = NULL;
+
 /* help */
 
 void cdist_print_usage(FILE *outstream) {
@@ -173,6 +175,37 @@ static int cdist_get_cmd(int *argc, char ***argv, enum cdist_cmd *cmd) {
 	return 0;
 }
 
+void cdist_init_config(struct cdist_config *config) {
+	FILE *fh;
+	const char *config_file;
+
+	config_file = global_options[PARAM_CONFIG_FILE];
+	if (config_file) {
+		/* Parse config file (as given by option) */
+		printf("processing config file (opt): %s\n", config_file);
+
+		fh = fopen(config_file, "r");
+		if (fh) {
+			cdist_config_parse_file(config, fh);
+			fclose(fh);
+		} else {
+			fprintf(stderr, "invalid config file: %s\n", config_file);
+			exit(1);
+		}
+
+	} else if ((config_file = cdist_config_find())) {
+		/* found a config file in default location */
+		printf("processing config file (found): %s\n", config_file);
+
+		fh = fopen(config_file, "r");
+		cdist_config_parse_file(config, fh);
+		fclose(fh);
+
+		free((void *)config_file);
+	}
+
+	cdist_config_parse_env(config);
+}
 
 int main(int argc, char *argv[]) {
 	enum cdist_cmd command = CMD_UNKNOWN;
@@ -192,6 +225,13 @@ int main(int argc, char *argv[]) {
 		/* error in global options */
 		return EXIT_FAILURE;
 	}
+
+	/* Read in cdist config */
+	cdist_config = cdist_config_alloc();
+	cdist_init_config(cdist_config);
+#if DEBUG
+	cdist_config_print(cdist_config, stdout); /* DEBUG */
+#endif
 
 	switch (cdist_get_cmd(&argrestc, &argrestv, &command)) {
 	case 0:
