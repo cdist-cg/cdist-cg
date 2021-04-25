@@ -1,6 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <unistd.h>
+#include <getopt.h> /* HACK: getopt() declaration */
+
+enum cdist_inventory_subcmd {
+	INV_UNKNOWN_SUBCMD,
+	INV_CMD_ADD_HOST,
+	INV_CMD_ADD_TAG,
+	INV_CMD_DEL_HOST,
+	INV_CMD_DEL_TAG,
+	INV_CMD_LIST
+};
 
 enum cdist_inventory_opt {
 	INVENTORY_DIR
@@ -69,7 +80,7 @@ static int cdist_get_inventory_opts(
 			options[INVENTORY_DIR] = optarg;
 			break;
 		case 'h':
-			print_help(stdout);
+			cdist_inv_print_help(stdout);
 			exit(EXIT_SUCCESS);
 		case ':':
 			fprintf(stderr, "- inventory: option requires an argument -- %c\n", optopt);
@@ -91,7 +102,45 @@ static int cdist_get_inventory_opts(
 	return optind;
 }
 
+static int cdist_get_inventory_subcmd(
+	int argc, char *argv[], enum cdist_inventory_subcmd *cmd) {
+	/**
+	 * Get inventory sub command
+	 *
+	 * @returns int positive on success (the number of consumed arguments),
+	 * negative on error.
+	 *
+	 *  0 no more arguments/invalid command
+	 *  1 command consumed
+	 */
+
+	if (argc <= 0) return 0;
+
+	if (!strcasecmp(argv[0], "add-host")) {
+		*cmd = INV_CMD_ADD_HOST;
+	} else if (!strcasecmp(argv[0], "add-tag")) {
+		*cmd = INV_CMD_ADD_TAG;
+	} else if (!strcasecmp(argv[0], "del-host")) {
+		*cmd = INV_CMD_DEL_HOST;
+	} else if (!strcasecmp(argv[0], "del-tag")) {
+		*cmd = INV_CMD_DEL_TAG;
+	} else if (!strcasecmp(argv[0], "list")) {
+		*cmd = INV_CMD_LIST;
+	} else {
+		/* Invalid command */
+		return 0;
+	}
+
+	return 1;
+}
+
 int cdist_inventory_main(int argc, char *argv[]) {
-	(void)cdist_get_inventory_opts(argc, argv, options);
+	int apos = 0;
+	enum cdist_inventory_subcmd subcmd = INV_UNKNOWN_SUBCMD;
+
+	apos += cdist_get_inventory_opts(argc, argv, inv_options);
+	apos += cdist_get_inventory_subcmd((argc-apos), &argv[apos], &subcmd);
+
+	printf("%u\n", subcmd);
 	return 1;
 }
